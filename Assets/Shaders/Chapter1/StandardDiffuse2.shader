@@ -1,4 +1,4 @@
-﻿Shader "CookbookShaders/StandardDiffuse2" {
+﻿Shader "Chapter1/StandardDiffuse2" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
