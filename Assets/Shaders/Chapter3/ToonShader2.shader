@@ -1,9 +1,8 @@
-﻿Shader "Chapter2/ScrollShader" {
+﻿Shader "Chapter3/ToonShader2" {
 	Properties {
-		_MainTint ("Diffuse Tint", Color) = (1,1,1,1)
-		_MainTex ("Base (RGB)", 2D) = "white" {}
-		_ScrollXSpeed ("X Scroll Speed", Range(-10, 10)) = 2
-		_ScrollYSpeed ("Y Scroll Speed", Range(-10, 10)) = 2
+		_Color ("Color", Color) = (1,1,1,1)
+		_MainTex ("Albedo (RGB)", 2D) = "white" {}
+		_CelShadingLevels ("Cel Shading Levels", float) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -11,7 +10,7 @@
 
 		CGPROGRAM
 		// Physically based Standard lighting model, and enable shadows on all light types
-		#pragma surface surf Standard fullforwardshadows
+		#pragma surface surf Toon
 
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
@@ -22,10 +21,8 @@
 			float2 uv_MainTex;
 		};
 
-		fixed4 _MainTint;
-		fixed _ScrollXSpeed;
-		fixed _ScrollYSpeed;
-
+		fixed4 _Color;
+		half _CelShadingLevels;
 
 		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
 		// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -34,17 +31,19 @@
 			// put more per-instance properties here
 		UNITY_INSTANCING_BUFFER_END(Props)
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
-			fixed2 scrolledUV = IN.uv_MainTex;
+		void surf (Input IN, inout SurfaceOutput o) {
+			o.Albedo = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+		}
 
-			fixed xScrollValue = _ScrollXSpeed * _Time;
-			fixed yScrollValue = _ScrollYSpeed * _Time;
+		half4 LightingToon(SurfaceOutput s, fixed3 lightDir, half atten) {
+			half NdotL = dot (s.Normal, lightDir);
+			half cel = floor (NdotL * _CelShadingLevels) / (_CelShadingLevels - 0.5);
 
-			scrolledUV += fixed2 (xScrollValue, yScrollValue);
+			half4 c;
+			c.rgb = s.Albedo * _LightColor0.rgb * cel * atten;
+			c.a = s.Alpha;
 
-			half4 c = tex2D (_MainTex, scrolledUV);
-			o.Albedo = c.rgb * _MainTint;
-			o.Alpha = c.a;
+			return c;
 		}
 		ENDCG
 	}

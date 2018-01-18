@@ -1,9 +1,10 @@
-﻿Shader "Chapter2/ScrollShader" {
+﻿Shader "Chapter2/RadiusShader" {
 	Properties {
-		_MainTint ("Diffuse Tint", Color) = (1,1,1,1)
-		_MainTex ("Base (RGB)", 2D) = "white" {}
-		_ScrollXSpeed ("X Scroll Speed", Range(-10, 10)) = 2
-		_ScrollYSpeed ("Y Scroll Speed", Range(-10, 10)) = 2
+		_MainTex("Texture (RGB)", 2D) = "white"{}
+		_Center("Center", Vector) = (0, 0, 0, 0)
+		_Radius("Radius", Float) = 0.5
+		_RadiusColor("Radius Color", Color) = (1, 0, 0, 1)
+		_RadiusWidth("Ridius Width", Float) = 2
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -16,16 +17,16 @@
 		// Use shader model 3.0 target, to get nicer looking lighting
 		#pragma target 3.0
 
-		sampler2D _MainTex;
-
 		struct Input {
 			float2 uv_MainTex;
+			float3 worldPos;
 		};
 
-		fixed4 _MainTint;
-		fixed _ScrollXSpeed;
-		fixed _ScrollYSpeed;
-
+		sampler2D _MainTex;
+		float3 _Center;
+		float _Radius;
+		fixed4 _RadiusColor;
+		float _RadiusWidth;
 
 		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
 		// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -35,16 +36,12 @@
 		UNITY_INSTANCING_BUFFER_END(Props)
 
 		void surf (Input IN, inout SurfaceOutputStandard o) {
-			fixed2 scrolledUV = IN.uv_MainTex;
-
-			fixed xScrollValue = _ScrollXSpeed * _Time;
-			fixed yScrollValue = _ScrollYSpeed * _Time;
-
-			scrolledUV += fixed2 (xScrollValue, yScrollValue);
-
-			half4 c = tex2D (_MainTex, scrolledUV);
-			o.Albedo = c.rgb * _MainTint;
-			o.Alpha = c.a;
+			float d = distance(_Center, IN.worldPos);
+			if(d > _Radius && d < _Radius + _RadiusWidth) {
+				o.Albedo = _RadiusColor;
+			} else {
+				o.Albedo = tex2D(_MainTex, IN.uv_MainTex).rgb;
+			}
 		}
 		ENDCG
 	}
